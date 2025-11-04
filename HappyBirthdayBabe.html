@@ -308,7 +308,8 @@
 
     function submitAnswer() {
 	var value = $("#userInput").val();
-	if(value == "kuska")
+  console.log("values",value.toLower());
+	if(value.toLower() == "kuska")
 	{
       const msg = document.getElementById('message');
       msg.style.display = 'block';
