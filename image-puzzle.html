@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Static Swipe Image Puzzle (3x5)</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #f0f0f0;
+    margin: 0;
+  }
+  h1 {
+    margin-bottom: 10px;
+  }
+  #puzzle-container {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(5, 100px);
+    gap: 2px;
+    position: relative;
+  }
+  .tile {
+    width: 100px;
+    height: 100px;
+    background-size: 300px 500px;
+    cursor: pointer;
+    user-select: none;
+    touch-action: none;
+  }
+  .empty {
+    background: #000;
+  }
+  button {
+    margin: 5px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+  }
+  #controls {
+    margin-top: 15px;
+  }
+</style>
+</head>
+<body>
+<marquee><h1>Itha mudichu ttu Screen shot anupu....gift tharen !!!</h1></marquee>
+<div id="puzzle-container"></div>
+<div id="controls">
+  <button id="reset">Reset</button>
+  <!-- <button id="show-solution">Show Solution</button> -->
+</div>
+<p id="status"></p>
+
+<script>
+const cols = 3;
+const rows = 5;
+const totalTiles = cols * rows;
+const emptyTile = totalTiles - 1;
+const imageURL = "comrade/IMG_20220507_235409.jpg";
+
+const container = document.getElementById("puzzle-container");
+const resetBtn = document.getElementById("reset");
+<!-- const showBtn = document.getElementById("show-solution"); -->
+const status = document.getElementById("status");
+
+let tiles = [];
+let emptyIndex = emptyTile;
+let solvedOrder = [...Array(totalTiles).keys()];
+
+function createTiles() {
+  container.innerHTML = "";
+  tiles = [];
+  for (let i = 0; i < totalTiles; i++) {
+    const div = document.createElement("div");
+    div.classList.add("tile");
+    if (i === emptyTile) {
+      div.classList.add("empty");
+    } else {
+      const x = (i % cols) * -100;
+      const y = Math.floor(i / cols) * -100;
+      div.style.backgroundImage = `url(${imageURL})`;
+      div.style.backgroundPosition = `${x}px ${y}px`;
+    }
+    div.dataset.index = i;
+    enableSwipe(div);
+    container.appendChild(div);
+    tiles.push(div);
+  }
+}
+
+function enableSwipe(tile) {
+  let startX, startY;
+
+  tile.addEventListener("touchstart", e => {
+    const touch = e.touches[0];
+    startX = touch.clientX;
+    startY = touch.clientY;
+  });
+
+  tile.addEventListener("touchend", e => {
+    const touch = e.changedTouches[0];
+    const endX = touch.clientX;
+    const endY = touch.clientY;
+    const dx = endX - startX;
+    const dy = endY - startY;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 30) moveTileBySwipe(tile, "right");
+      else if (dx < -30) moveTileBySwipe(tile, "left");
+    } else {
+      if (dy > 30) moveTileBySwipe(tile, "down");
+      else if (dy < -30) moveTileBySwipe(tile, "up");
+    }
+  });
+
+  tile.addEventListener("click", () => tryMove(tile));
+}
+
+function moveTileBySwipe(tile, direction) {
+  const index = tiles.indexOf(tile);
+  const x = index % cols, y = Math.floor(index / cols);
+  const ex = emptyIndex % cols, ey = Math.floor(emptyIndex / cols);
+
+  if (direction === "left" && x > 0 && ex === x - 1 && ey === y) tryMove(tile);
+  if (direction === "right" && x < cols - 1 && ex === x + 1 && ey === y) tryMove(tile);
+  if (direction === "up" && y > 0 && ex === x && ey === y - 1) tryMove(tile);
+  if (direction === "down" && y < rows - 1 && ex === x && ey === y + 1) tryMove(tile);
+}
+
+function tryMove(tile) {
+  const index = tiles.indexOf(tile);
+  if (canMove(index, emptyIndex)) {
+    swap(index, emptyIndex);
+    checkSolved();
+  }
+}
+
+function canMove(i1, i2) {
+  const x1 = i1 % cols, y1 = Math.floor(i1 / cols);
+  const x2 = i2 % cols, y2 = Math.floor(i2 / cols);
+  return (Math.abs(x1 - x2) + Math.abs(y1 - y2)) === 1;
+}
+
+function swap(i1, i2) {
+  const temp = tiles[i1];
+  tiles[i1] = tiles[i2];
+  tiles[i2] = temp;
+  emptyIndex = i1;
+  render();
+}
+
+function render() {
+  container.innerHTML = "";
+  tiles.forEach(tile => container.appendChild(tile));
+}
+
+function shuffle() {
+  let order = solvedOrder.slice();
+  do {
+    order.sort(() => Math.random() - 0.5);
+  } while (!isSolvable(order));
+  applyOrder(order);
+}
+
+function applyOrder(order) {
+  tiles = order.map(i => {
+    const t = document.createElement("div");
+    t.classList.add("tile");
+    if (i === emptyTile) {
+      t.classList.add("empty");
+      emptyIndex = order.indexOf(emptyTile);
+    } else {
+      const x = (i % cols) * -100;
+      const y = Math.floor(i / cols) * -100;
+      t.style.backgroundImage = `url(${imageURL})`;
+      t.style.backgroundPosition = `${x}px ${y}px`;
+    }
+    t.dataset.index = i;
+    enableSwipe(t);
+    return t;
+  });
+  render();
+}
+
+function isSolvable(order) {
+  let inv = 0;
+  for (let i = 0; i < totalTiles - 1; i++) {
+    for (let j = i + 1; j < totalTiles; j++) {
+      if (order[i] !== emptyTile && order[j] !== emptyTile && order[i] > order[j]) inv++;
+    }
+  }
+  return inv % 2 === 0;
+}
+
+function checkSolved() {
+  const current = tiles.map(t => parseInt(t.dataset.index));
+  if (JSON.stringify(current) === JSON.stringify(solvedOrder)) {
+    status.textContent = "🎉 Puzzle Solved!";
+  } else {
+    status.textContent = "";
+  }
+}
+
+resetBtn.onclick = () => shuffle();
+<!-- showBtn.onclick = () => applyOrder(solvedOrder); -->
+
+createTiles();
+shuffle();
+</script>
+</body>
+</html>

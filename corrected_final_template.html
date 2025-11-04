@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Birthday Rolling Windows</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #ffb6d5, #ff66b2);
+      overflow: hidden;
+      font-family: "Poppins", sans-serif;
+      perspective: 1000px;
+    }
+
+    .carousel {
+      position: relative;
+      width: 280px;
+      height: 420px;
+      transform-style: preserve-3d;
+      animation: rotate 18s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotateY(0deg); }
+      to { transform: rotateY(360deg); }
+    }
+
+    .carousel span {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform-origin: center;
+      transform-style: preserve-3d;
+      transform: rotateY(calc(var(--i) * 45deg)) translateZ(350px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.2em;
+      text-shadow: 0 0 10px rgba(255, 0, 150, 0.6);
+    }
+
+    .frame {
+       posiion: absolute;
+      width: 200px;
+      height: 300px;
+      background: pink;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      transform-origin: center;   
+	}
+
+    .frame img {
+      width: 100%;
+      height: 85%;
+      object-fit: cover;
+    }
+	
+	.p {
+      text-align: center;
+      font-weight: bold;
+      padding: 10px;
+      color: #ff4081;
+    }
+
+    h1 {
+      position: absolute;
+      top: 120px;
+      width: 100%;
+      text-align: center;
+      font-size: 2.2em;
+      color: #fff;
+      text-shadow: 0 0 15px #ff007f;
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 10px #fff, 0 0 25px #ff0080; }
+      to { text-shadow: 0 0 20px #fff, 0 0 40px #ff66b2; }
+    }
+	
+	 /* Popup styling */
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      background: rgba(255, 240, 245, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 0 40px #ff99cc;
+      width: 300px;
+      text-align: center;
+      opacity: 0;
+      transition: all 0.5s ease;
+    }
+
+    .popup.show {
+      display: block;
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .popup.fade-out {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.9);
+    }
+
+    .popup h2 {
+      color: #ff3399;
+      font-size: 22px;
+      margin-bottom: 15px;
+    }
+
+    .popup input {
+      width: 90%;
+      padding: 10px;
+      border: 2px solid #ff99cc;
+      border-radius: 10px;
+      outline: none;
+      font-size: 16px;
+    }
+
+    .popup button {
+      margin-top: 15px;
+      padding: 10px 18px;
+      background: linear-gradient(45deg, #ff66b2, #ff99cc);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #ff66b2;
+      font-weight: bold;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 20px;
+      color: #ff3399;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .popup .message {
+      display: none;
+      color: #ff66b2;
+      font-weight: bold;
+      margin-top: 10px;
+      text-shadow: 0 0 10px #ff99cc;
+    }
+	 /* Cartoon-style pink treasure chest button */
+    .treasure-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 80px;
+      height: 70px;
+      background: linear-gradient(180deg, #ff99cc 0%, #ff66b2 50%, #ff3385 100%);
+      border: 3px solid #ff80bf;
+      border-radius: 10px 10px 5px 5px;
+      box-shadow: 0 0 30px #ff66b2, inset 0 0 10px #ff99cc;
+      cursor: pointer;
+      position: fixed;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .treasure-lid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 35%;
+      background: linear-gradient(180deg, #ffb3d9 0%, #ff66b2 80%);
+      border-radius: 10px 10px 0 0;
+      transform-origin: top;
+      transition: transform 0.4s ease;
+      box-shadow: inset 0 0 8px #ff99cc;
+    }
+
+    .treasure-button:hover .treasure-lid {
+      transform: rotateX(25deg);
+    }
+
+    .treasure-sparkle {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.7), transparent 60%);
+      opacity: 0;
+      animation: sparkle 3s infinite;
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+  </style>
+</head>
+<body>
+  <h1>🎉 Happy Birthday 🎂</h1>
+
+  <div class="carousel">
+    <span style="--i:1">
+      <div class="frame">
+        <img src="comrade\IMG-20220223-WA0011.jpg" alt="">
+      <p style="text-align: center;">Wishing You Joy!</p>
+	  </div>
+    </span>
+
+    <span style="--i:2">
+      <div class="frame">
+        <img src="comrade\IMG_20220225_234536_370.jpg" alt="">
+      <p style="text-align: center;">Have a Great Day!</p>
+	  </div>
+    </span>
+
+    <span style="--i:3">
+      <div class="frame">
+        <img src="comrade\IMG-20221031-WA0027.jpg" alt="">
+      <p style="text-align: center;">Celebrate with Love</p>
+	  </div>
+    </span>
+
+    <span style="--i:4">
+      <div class="frame">
+        <img src="comrade\IMG-20221031-WA0050.jpg" alt="">
+      <p style="text-align: center;">Smiles All Around</p>
+	  </div>
+    </span>
+
+    <span style="--i:5">
+      <div class="frame">
+        <img src="comrade\IMG_20240516_073837_699.jpg" alt="">
+      <p style="text-align: center;">Enjoy Every Moment</p>
+	  </div>
+    </span>
+
+    <span style="--i:6">
+      <div class="frame">
+        <img src="comrade\IMG_20240106_232950_869.jpg" alt="">
+      <p style="text-align: center;">Shine Bright!</p>
+	  </div>
+    </span>
+
+    <span style="--i:7">
+      <div class="frame">
+        <img src="comrade\IMG_20250824_224146_825.jpg" alt="">
+      <p style="text-align: center;">Be Happy Always</p>
+	  </div>
+    </span>
+
+    <span style="--i:8">
+      <div class="frame">
+        <img src="comrade\IMG-20250830-WA0001.jpg" alt="">
+      <p style="text-align: center;">Make Memories!</p>
+	  </div>
+    </span>
+  </div>
+  <div class="treasure-button" onclick="openPopup()" style="justify-content:center">
+    <div class="treasure-lid"></div>
+    <div class="treasure-sparkle"></div>
+	<p style="text-align:center;font-size:15px;margin-top:20px;">CLICK MEEE</p/>
+  </div>
+  
+  <div class="popup" id="popup">
+    <div class="close-btn" onclick="closePopup()">×</div>
+    <h2>What’s My Favourite Food?</h2>
+    <input type="text" id="userInput" placeholder="Type something special..." />
+    <button onclick="submitAnswer()">Submit</button>
+    <div class="message" id="message">🎂 Wow! I need that daily! 🎉</div>
+  </div>
+  <audio autoplay loop>
+  <source src="comrade\song.mp3">
+  </audio>
+  
+    <script>
+    function openPopup() {
+      const popup = document.getElementById('popup');
+      popup.classList.remove('fade-out');
+      popup.classList.add('show');
+    }
+
+    function closePopup() {
+      const popup = document.getElementById('popup');
+      popup.classList.add('fade-out');
+      setTimeout(() => popup.classList.remove('show', 'fade-out'), 500);
+    }
+
+    function submitAnswer() {
+	var value = $("#userInput").val();
+	if(value == "kuska")
+	{
+      const msg = document.getElementById('message');
+      msg.style.display = 'block';
+      setTimeout(closePopup, 2000);
+	  window.location.href = "image-puzzle.html";
+	}else{
+	alert("How you Forgot my fav dish !!!!");
+   }
+   }
+  </script>
+  
+  
+</body>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js">
+</script>
+</html>
